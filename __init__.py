@@ -113,13 +113,21 @@ class FrankaLockUnlock:
 
     def _lock_unlock(self, unlock: bool, force: bool = False):
         print(f'{"Unlocking" if unlock else "Locking"} the robot...')
-        action = self._session.post(urljoin(self._hostname, f'/desk/api/robot/{"open" if unlock else "close"}-brakes'), \
+        action = self._session.post(urljoin(self._hostname, f'/admin/api/safety/joints/{"unlock" if unlock else "lock"}'), \
                                                         files={'force': force},
                                                         headers={'X-Control-Token': self._token})
         assert action.status_code == 200, "Error requesting brake open/close action."
         print(f'Successfully {"unlocked" if unlock else "locked"} the robot.')
-
-    def run(self, unlock: bool = False, force: bool = False, wait: bool = False, request: bool = False, persistent: bool = False, fci: bool = False) -> None:
+        
+   
+    def _execution_mode(self):
+        print(f'Switch "Execution Mode" the robot...')
+        action = self._session.post(urljoin(self._hostname, f'/desk/api/operating-mode/execution'), \
+                                                        headers={'X-Control-Token': self._token})
+        assert action.status_code == 200, "Error switching to execution mode."
+        print(f'Successfully switched to execution mode.')
+        
+    def run(self, unlock: bool = False, force: bool = False, wait: bool = False, request: bool = False, persistent: bool = False, fci: bool = False, execution: bool=True) -> None:
         assert not request or wait, "Requesting control without waiting for obtaining control is not supported."
         assert not fci or unlock, "Activating FCI without unlocking is not possible."
         assert not fci or persistent, "Activating FCI without persistence is not possible."
@@ -136,6 +144,7 @@ class FrankaLockUnlock:
                             self._lock_unlock(unlock=unlock)
                             if fci:
                                 self._activate_fci()
+                                self._execution_mode()
                             return
                         if request:
                             print('Please press the button with the (blue) circle on the robot to confirm physical access.')
