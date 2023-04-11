@@ -110,6 +110,13 @@ class FrankaLockUnlock:
                                          json={'token': self._token})
         assert fci_request.status_code == 200, "Error activating FCI."
         print("Successfully activated FCI.")
+   
+    def _gripper_homing(self):
+        print(f'Switch "Execution Mode" the robot...')
+        action = self._session.post(urljoin(self._hostname, f'/desk/api/gripper/homing'), \
+                                                        headers={'X-Control-Token': self._token})
+        assert action.status_code == 200, "Error switching to execution mode."
+        print(f'Successfully gripper homing.')
 
     def _lock_unlock(self, unlock: bool, force: bool = False):
         print(f'{"Unlocking" if unlock else "Locking"} the robot...')
@@ -144,6 +151,7 @@ class FrankaLockUnlock:
                             self._lock_unlock(unlock=unlock)
                             if fci:
                                 self._activate_fci()
+                                self._gripper_homing()
                                 self._execution_mode()
                             return
                         if request:
