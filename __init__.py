@@ -115,7 +115,7 @@ class FrankaLockUnlock:
     def _gripper_homing(self):
         print(f'Execute gripper homing...')
         # use pylibfranka since the REST binding is not available after libfranka 0.10.0 (or later)
-        gripper = pylibfranka.Gripper(self._hostname)
+        gripper = pylibfranka.Gripper(self._hostname.strip('https://'))
         gripper.homing()
         print(f'Successfully executed gripper homing.')
 
