@@ -19,6 +19,7 @@ from time import sleep
 from itertools import count
 import atexit
 from threading import Event
+import pylibfranka
 
 class FrankaLockUnlock:
     def __init__(self, hostname: str, username: str, password: str, protocol: str = 'https', relock: bool = False):
@@ -112,11 +113,11 @@ class FrankaLockUnlock:
         print("Successfully activated FCI.")
    
     def _gripper_homing(self):
-        print(f'Switch "Execution Mode" the robot...')
-        action = self._session.post(urljoin(self._hostname, f'/desk/api/gripper/homing'), \
-                                                        headers={'X-Control-Token': self._token})
-        assert action.status_code == 200, "Error switching to execution mode."
-        print(f'Successfully gripper homing.')
+        print(f'Execute gripper homing...')
+        # use pylibfranka since the REST binding is not available after libfranka 0.10.0 (or later)
+        gripper = pylibfranka.Gripper(self._hostname)
+        gripper.homing()
+        print(f'Successfully executed gripper homing.')
 
     def _lock_unlock(self, unlock: bool, force: bool = False):
         print(f'{"Unlocking" if unlock else "Locking"} the robot...')
@@ -150,9 +151,9 @@ class FrankaLockUnlock:
                             print('Successfully acquired control over the robot.')
                             self._lock_unlock(unlock=unlock)
                             if fci:
+                                self._execution_mode()
                                 self._activate_fci()
                                 self._gripper_homing()
-                                self._execution_mode()
                             return
                         if request:
                             print('Please press the button with the (blue) circle on the robot to confirm physical access.')
